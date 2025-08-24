@@ -12,7 +12,7 @@ class ApiService extends GetxService {
   void onInit() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'https://v8x7943n-8000.uks1.devtunnels.ms', // For Flutter web
+        baseUrl: 'https://final-year-backend-fzza.onrender.com', // For Flutter web
         connectTimeout: AppDurations.apiTimeout,
         receiveTimeout: AppDurations.apiTimeout,
         headers: {'Content-Type': 'application/json'},
