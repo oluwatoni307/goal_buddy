@@ -1,0 +1,18 @@
+GET /api/home
+Response 200:
+{
+  "todayHabits": [
+    {"id":"1","name":"Focus","minutes":25,"isCompleted":false},
+    {"id":"2","name":"Meditate","minutes":10,"isCompleted":true},
+    ...
+  ],
+  "progress": {
+    "dailyDone":3,
+    "dailyTotal":5,
+    "weeklyDone":2,
+    "weeklyTotal":5
+  },
+  "insight": {
+    "text":"You're most productive in the morning..."
+  }
+}
