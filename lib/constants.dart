@@ -11,7 +11,7 @@ class AppStrings {
 }
 
 class AppDurations {
-  static const apiTimeout = Duration(seconds: 30);
+  static const apiTimeout = Duration(seconds: 300);
 }
 
 class AppKeys {
