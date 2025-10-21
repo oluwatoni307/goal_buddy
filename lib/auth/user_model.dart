@@ -1,32 +1,20 @@
-class UserModel {
-  final int id;
-  final String name;
+// models/auth_models.dart
+
+class User {
+  final String id;
   final String email;
-  final String? avatar;
 
-  const UserModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    this.avatar,
-  });
+  User({required this.id, required this.email});
 
-  /// Factory from JSON (placeholder shape)
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        email: json['email'] as String,
-        avatar: json['avatar'] as String?,
-      );
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(id: map['id'] ?? '', email: map['email'] ?? '');
+  }
+}
 
-  /// To JSON
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'avatar': avatar,
-      };
+class AuthResponse {
+  final bool success;
+  final User? user;
+  final String? error;
 
-  /// Empty user for initial state
-  static const empty = UserModel(id: 0, name: '', email: '');
+  AuthResponse({required this.success, this.user, this.error});
 }

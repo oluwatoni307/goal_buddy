@@ -9,7 +9,7 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
@@ -44,10 +44,7 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            strokeWidth: 3,
-            color: colorScheme.primary,
-          ),
+          CircularProgressIndicator(strokeWidth: 3, color: colorScheme.primary),
           const SizedBox(height: 24),
           Text(
             'Loading task details...',
@@ -64,7 +61,7 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
   Widget _buildErrorState(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -114,7 +111,7 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
   Widget _buildMainContent(BuildContext context, dynamic dto) {
     final theme = Theme.of(context);
     final _ = theme.colorScheme;
-    
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
@@ -122,24 +119,24 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Task Hierarchy Card
-            _buildTaskHierarchyCard(context, dto),
-            
+            // Task Info Card
+            _buildTaskInfoCard(context, dto),
+
             const SizedBox(height: 24),
-            
-            // Ritual Information
-            _buildRitualCard(context, dto),
-            
+
+            // Task Details (parsed from description)
+            _buildTaskDetailsCard(context, dto),
+
             const SizedBox(height: 24),
-            
+
             // Completion Notes Section
             _buildNotesSection(context, dto),
-            
+
             const SizedBox(height: 32),
-            
+
             // Action Button
             _buildActionButton(context),
-            
+
             const SizedBox(height: 24),
           ],
         ),
@@ -147,26 +144,22 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
     );
   }
 
-  Widget _buildTaskHierarchyCard(BuildContext context, dynamic dto) {
+  Widget _buildTaskInfoCard(BuildContext context, dynamic dto) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Card(
       elevation: 0,
       color: colorScheme.primaryContainer.withOpacity(0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outline.withOpacity(0.2),
-          width: 1,
-        ),
+        side: BorderSide(color: colorScheme.outline.withOpacity(0.2), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Goal
             Row(
               children: [
                 Container(
@@ -176,183 +169,230 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    Icons.flag_outlined,
+                    Icons.task_alt,
                     size: 20,
                     color: colorScheme.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Goal',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.6),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dto.goalName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    dto.name,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ],
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Milestone
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.secondary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.timeline,
-                    size: 20,
-                    color: colorScheme.secondary,
-                  ),
+
+            if (dto.objective != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Milestone',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.6),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dto.milestoneName,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.track_changes,
+                      size: 18,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        dto.objective!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurface,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Task
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.tertiary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.task_alt,
-                    size: 20,
-                    color: colorScheme.tertiary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Current Task',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.6),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dto.taskTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRitualCard(BuildContext context, dynamic dto) {
+  Widget _buildTaskDetailsCard(BuildContext context, dynamic dto) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Card(
       elevation: 0,
       color: colorScheme.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outline.withOpacity(0.2),
-          width: 1,
-        ),
+        side: BorderSide(color: colorScheme.outline.withOpacity(0.2), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.self_improvement,
-                size: 24,
-                color: colorScheme.onPrimaryContainer,
+            Text(
+              'Task Details',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ritual Practice',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
-                      fontWeight: FontWeight.w500,
-                    ),
+            const SizedBox(height: 16),
+
+            // Task attributes
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                if (dto.taskType != null)
+                  _buildChip(
+                    context,
+                    label: dto.taskType!,
+                    icon: Icons.category_outlined,
+                    color: colorScheme.secondary,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    dto.ritual,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurface,
-                    ),
+                if (dto.cognitiveLoad != null)
+                  _buildChip(
+                    context,
+                    label: dto.cognitiveLoad!,
+                    icon: Icons.psychology_outlined,
+                    color: colorScheme.tertiary,
                   ),
-                ],
-              ),
+                if (dto.timeAllocated != null)
+                  _buildChip(
+                    context,
+                    label: dto.timeAllocated!,
+                    icon: Icons.schedule,
+                    color: colorScheme.primary,
+                  ),
+              ],
             ),
+
+            if (dto.specificActions.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Text(
+                'Specific Actions',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...dto.specificActions.map<Widget>(
+                (action) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          action,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+
+            if (dto.successMetric != null) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colorScheme.primary.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Success Metric',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            dto.successMetric!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildChip(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -360,7 +400,7 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
   Widget _buildNotesSection(BuildContext context, dynamic dto) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -375,13 +415,13 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
           ),
         ),
         TextFormField(
+          initialValue: dto.completionDescription,
           maxLines: 5,
           style: theme.textTheme.bodyMedium,
           decoration: InputDecoration(
-            hintText: 'How did you complete this task? What did you learn or accomplish?',
-            hintStyle: TextStyle(
-              color: colorScheme.onSurface.withOpacity(0.5),
-            ),
+            hintText:
+                'How did you complete this task? What did you learn or accomplish?',
+            hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
             filled: true,
             fillColor: colorScheme.surfaceContainerHigh,
             border: OutlineInputBorder(
@@ -398,21 +438,11 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: colorScheme.primary,
-                width: 2,
-              ),
+              borderSide: BorderSide(color: colorScheme.primary, width: 2),
             ),
             contentPadding: const EdgeInsets.all(16),
           ),
-          onChanged: (value) {
-            final currentDto = controller.dto.value;
-            if (currentDto != null) {
-              currentDto.userNotes = value;
-              // Trigger reactive update if needed
-              controller.dto.refresh();
-            }
-          },
+          onChanged: controller.updateNotes,
         ),
       ],
     );
@@ -421,53 +451,58 @@ class TaskCompletionScreen extends GetView<TaskCompletionController> {
   Widget _buildActionButton(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return SizedBox(
       width: double.infinity,
       child: Obx(() {
         final isSaving = controller.saving.value;
-        
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          child: FilledButton.icon(
-            onPressed: isSaving ? null : controller.save,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              backgroundColor: isSaving 
+
+        return FilledButton(
+          onPressed: isSaving ? null : controller.save,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            backgroundColor: isSaving
                 ? colorScheme.surfaceContainerHigh
                 : colorScheme.primary,
-              foregroundColor: isSaving
+            foregroundColor: isSaving
                 ? colorScheme.onSurface.withOpacity(0.6)
                 : colorScheme.onPrimary,
-            ),
-            icon: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: isSaving
-                ? SizedBox(
-                    key: const ValueKey('loading'),
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        colorScheme.onSurface.withOpacity(0.6),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: isSaving
+                    ? SizedBox(
+                        key: const ValueKey('loading'),
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        Icons.check_circle,
+                        key: const ValueKey('check'),
+                        size: 20,
                       ),
-                    ),
-                  )
-                : Icon(
-                    Icons.check_circle,
-                    key: const ValueKey('check'),
-                  ),
-            ),
-            label: Text(
-              isSaving ? 'Completing...' : 'Mark as Completed',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
               ),
-            ),
+              const SizedBox(width: 12),
+              Text(
+                isSaving ? 'Completing...' : 'Mark as Completed',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         );
       }),

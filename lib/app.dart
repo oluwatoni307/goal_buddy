@@ -10,10 +10,10 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'QuickStart',
+      title: 'Goal Buddy',
       debugShowCheckedModeBanner: false,
       theme: materialLightTheme,
-      initialRoute: Routes.login,
+      initialRoute: Routes.onboarding,
       getPages: Routes.pages,
     );
   }

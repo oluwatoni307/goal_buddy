@@ -1,4 +1,5 @@
-// MODERNIZED Goal Detail Screen with Material 3 and latest Flutter syntax
+// UPDATED Goal Detail Screen with Controller-First Navigation
+// MODERNIZED with Material 3 and latest Flutter syntax
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../goal_controller.dart';
@@ -12,11 +13,10 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final goalId = Get.parameters['id'] ?? '';
-    final milestones = controller.goalMilestones.value;
 
-    // ensure milestones are loaded
-    if (controller.currentGoalId.value != goalId) {
-      controller.loadMilestones(goalId);
+    // Trigger smart loading if needed (non-blocking)
+    if (controller.shouldLoadMilestones(goalId)) {
+      Future.microtask(() => controller.loadMilestones(goalId));
     }
 
     return Scaffold(
@@ -27,10 +27,7 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: colorScheme.onSurface,
-          ),
+          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
         ),
         title: Text(
           'Goal Details',
@@ -40,6 +37,9 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
         ),
       ),
       body: Obx(() {
+        final milestones = controller.goalMilestones.value;
+
+        // Loading state
         if (controller.milestonesLoading.value && milestones == null) {
           return Center(
             child: Column(
@@ -61,6 +61,7 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
           );
         }
 
+        // Error state
         if (controller.milestonesError.value.isNotEmpty) {
           return Center(
             child: Card(
@@ -102,11 +103,12 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
           );
         }
 
+        // No data state
         if (milestones == null) {
           return const Center(child: SizedBox.shrink());
         }
 
-        // partition milestones
+        // Partition milestones
         final active = milestones.milestones
             .where((m) => m.status == StatusState.active)
             .toList();
@@ -119,17 +121,16 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
 
         final totalMilestones = milestones.milestones.length;
         final completedCount = completed.length;
-        final progress = totalMilestones > 0 ? completedCount / totalMilestones : 0.0;
+        final progress = totalMilestones > 0
+            ? completedCount / totalMilestones
+            : 0.0;
 
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                colorScheme.surfaceContainerLowest,
-                colorScheme.surface,
-              ],
+              colors: [colorScheme.surfaceContainerLowest, colorScheme.surface],
               stops: const [0.0, 0.3],
             ),
           ),
@@ -152,11 +153,12 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  milestones.goalName,
-                                  style: theme.textTheme.headlineMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onPrimaryContainer,
-                                  ),
+                                  controller.getCurrentGoalName(),
+                                  style: theme.textTheme.headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onPrimaryContainer,
+                                      ),
                                 ),
                               ),
                               Container(
@@ -180,9 +182,11 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            milestones.goalDescription,
+                            controller.getCurrentGoalDescription(),
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                              color: colorScheme.onPrimaryContainer.withOpacity(
+                                0.8,
+                              ),
                               height: 1.4,
                             ),
                           ),
@@ -191,27 +195,32 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Progress',
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      color: colorScheme.onPrimaryContainer,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color: colorScheme.onPrimaryContainer,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                   ),
                                   Text(
                                     '$completedCount of $totalMilestones milestones',
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      color: colorScheme.onPrimaryContainer.withOpacity(0.8),
-                                    ),
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color: colorScheme.onPrimaryContainer
+                                              .withOpacity(0.8),
+                                        ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               LinearProgressIndicator(
                                 value: progress,
-                                backgroundColor: colorScheme.onPrimaryContainer.withOpacity(0.2),
+                                backgroundColor: colorScheme.onPrimaryContainer
+                                    .withOpacity(0.2),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   colorScheme.primary,
                                 ),
@@ -233,7 +242,8 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     child: _SectionHeader(
                       title: 'Active',
-                      subtitle: '${active.length} milestone${active.length != 1 ? 's' : ''}',
+                      subtitle:
+                          '${active.length} milestone${active.length != 1 ? 's' : ''}',
                       icon: Icons.play_circle_filled,
                       color: colorScheme.primary,
                     ),
@@ -261,7 +271,8 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                     margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                     child: _SectionHeader(
                       title: 'Upcoming',
-                      subtitle: '${upcoming.length} milestone${upcoming.length != 1 ? 's' : ''}',
+                      subtitle:
+                          '${upcoming.length} milestone${upcoming.length != 1 ? 's' : ''}',
                       icon: Icons.schedule,
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -274,7 +285,9 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                       (context, index) => _ModernMilestoneTile(
                         milestone: upcoming[index],
                         status: MilestoneStatus.upcoming,
-                        animationDelay: Duration(milliseconds: (active.length + index) * 100),
+                        animationDelay: Duration(
+                          milliseconds: (active.length + index) * 100,
+                        ),
                       ),
                       childCount: upcoming.length,
                     ),
@@ -289,7 +302,8 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                     margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                     child: _SectionHeader(
                       title: 'Completed',
-                      subtitle: '${completed.length} milestone${completed.length != 1 ? 's' : ''}',
+                      subtitle:
+                          '${completed.length} milestone${completed.length != 1 ? 's' : ''}',
                       icon: Icons.check_circle,
                       color: Colors.green,
                     ),
@@ -302,7 +316,10 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
                       (context, index) => _ModernMilestoneTile(
                         milestone: completed[index],
                         status: MilestoneStatus.completed,
-                        animationDelay: Duration(milliseconds: (active.length + upcoming.length + index) * 100),
+                        animationDelay: Duration(
+                          milliseconds:
+                              (active.length + upcoming.length + index) * 100,
+                        ),
                       ),
                       childCount: completed.length,
                     ),
@@ -311,9 +328,7 @@ class GoalDetailScreen extends GetView<GoalDisplayController> {
               ],
 
               // Bottom spacing
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 24),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
         );
@@ -342,7 +357,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -353,11 +368,7 @@ class _SectionHeader extends StatelessWidget {
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: color,
-            ),
+            child: Icon(icon, size: 20, color: color),
           ),
           const SizedBox(width: 12),
           Column(
@@ -398,7 +409,7 @@ class _ModernMilestoneTile extends GetView<GoalDisplayController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeOutCubic,
@@ -406,10 +417,7 @@ class _ModernMilestoneTile extends GetView<GoalDisplayController> {
       builder: (context, value, child) {
         return Transform.translate(
           offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
+          child: Opacity(opacity: value, child: child),
         );
       },
       child: Container(
@@ -419,17 +427,13 @@ class _ModernMilestoneTile extends GetView<GoalDisplayController> {
           color: _getCardColor(colorScheme),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: _getBorderColor(colorScheme),
-              width: 1,
-            ),
+            side: BorderSide(color: _getBorderColor(colorScheme), width: 1),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: () async {
-              // Navigate to task page for this milestone
-              await controller.loadTasks(milestone.id);
-              Get.toNamed('/tasks/${milestone.id}');
+            onTap: () {
+              // ✅ USE CONTROLLER NAVIGATION METHOD
+              controller.navigateToMilestone(milestone.id);
             },
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -449,7 +453,7 @@ class _ModernMilestoneTile extends GetView<GoalDisplayController> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Content
                   Expanded(
                     child: Column(
@@ -489,7 +493,7 @@ class _ModernMilestoneTile extends GetView<GoalDisplayController> {
                       ],
                     ),
                   ),
-                  
+
                   // Navigation Arrow
                   Icon(
                     Icons.chevron_right,
@@ -551,11 +555,11 @@ class _ModernMilestoneTile extends GetView<GoalDisplayController> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = date.difference(now).inDays;
-    
+
     if (status == MilestoneStatus.completed) {
       return 'Completed ${date.toString().substring(0, 10)}';
     }
-    
+
     if (difference < 0) {
       return 'Overdue ${(-difference)} days';
     } else if (difference == 0) {

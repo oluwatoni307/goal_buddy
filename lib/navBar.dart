@@ -3,11 +3,8 @@ import 'package:get/get.dart';
 
 class NavBar extends StatelessWidget {
   final int currentIndex;
-  
-  const NavBar({
-    Key? key,
-    required this.currentIndex,
-  }) : super(key: key);
+
+  const NavBar({Key? key, required this.currentIndex}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +15,12 @@ class NavBar extends StatelessWidget {
           case 0:
             Get.offAllNamed('/home');
             break;
+
           case 1:
-            Get.offAllNamed('/dashboard');
-            break;
-          case 2:
             Get.offAllNamed('/goals');
             break;
+          case 2:
+            Get.offAllNamed('/schedule');
           case 3:
             Get.offAllNamed('/profile');
             break;
@@ -33,22 +30,14 @@ class NavBar extends StatelessWidget {
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.grey,
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard),
-          label: 'Dashboard',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+
         BottomNavigationBarItem(
           icon: Icon(Icons.track_changes),
           label: 'Goals',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Schedule'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
     );
   }

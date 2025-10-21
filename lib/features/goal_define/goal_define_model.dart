@@ -25,7 +25,7 @@ abstract class GoalOutputDto with _$GoalOutputDto {
   const factory GoalOutputDto({
     // Make goalId optional since API doesn't return it
     String? goalId,
-    
+
     // Map snake_case API fields to camelCase Dart fields
     @JsonKey(name: 'goal_type') required String goalType,
     required int specific,
