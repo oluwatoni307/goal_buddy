@@ -1,5 +1,3 @@
-// GENERATED for feature: task
-// TODO: implement
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../task_model.dart';
@@ -20,198 +18,274 @@ class TaskProgressPage extends StatefulWidget {
 
 class _TaskProgressPageState extends State<TaskProgressPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+  late AnimationController _fadeController;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     )..forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final rating = widget.progressData['rating'] ?? 0;
+    final rating = _parseRating(widget.progressData['rating'] ?? 0);
     final feedback = widget.progressData['feedback'] ?? '';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Task Completion Summary'),
-        centerTitle: true,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Minimal Header
+            _buildHeader(),
+
+            // Main Content
+            Expanded(
+              child: FadeTransition(
+                opacity: _fadeController,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.06,
+                        ),
+
+                        // Rating Number
+                        _buildRatingNumber(rating),
+                        const SizedBox(height: 16),
+
+                        // Status Badge
+                        _buildStatusBadge(rating),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.10,
+                        ),
+
+                        // Feedback - NOW THE HERO
+                        _buildFeedbackSection(feedback),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.06,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Footer Actions
+            _buildFooterActions(),
+          ],
+        ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Success Header
-              _buildSuccessHeader(),
-              const SizedBox(height: 32),
+    );
+  }
 
-              // Rating Section
-              _buildRatingSection(rating),
-              const SizedBox(height: 32),
-
-              // Feedback Section
-              _buildFeedbackSection(feedback),
-              const SizedBox(height: 32),
-
-              // Action Buttons
-              _buildActionButtons(),
-            ],
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'COMPLETION',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w300,
+              letterSpacing: 1.2,
+              color: Colors.black87,
+            ),
           ),
-        ),
+          GestureDetector(
+            onTap: () => Get.offAllNamed('/home'),
+            child: const Icon(Icons.home, size: 20, color: Colors.grey),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSuccessHeader() {
-    return ScaleTransition(
-      scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-        CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
-      ),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
-          border: Border.all(color: Colors.green, width: 2),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 56),
-            const SizedBox(height: 12),
-            Text(
-              'Task Completed Successfully!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.green,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+  Widget _buildRatingNumber(int rating) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: '$rating',
+            style: const TextStyle(
+              fontSize: 80,
+              fontWeight: FontWeight.w300,
+              color: Colors.black,
+              height: 1.0,
             ),
-          ],
-        ),
+          ),
+          TextSpan(
+            text: '/10',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w300,
+              color: Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildRatingSection(dynamic rating) {
-    final ratingValue = rating is int
-        ? rating
-        : (rating is String ? int.tryParse(rating) : 0) ?? 0;
+  Widget _buildStatusBadge(int rating) {
+    final statusData = _getStatusData(rating);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Rating',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    '$ratingValue',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: _getRatingColor(ratingValue),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      5,
-                      (index) => Icon(
-                        index < ratingValue ? Icons.star : Icons.star_outline,
-                        color: _getRatingColor(ratingValue),
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: statusData['bgColor'],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: statusData['borderColor'], width: 1.2),
+      ),
+      child: Text(
+        statusData['label'],
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: statusData['textColor'],
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
 
   Widget _buildFeedbackSection(String feedback) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Feedback',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                feedback.isEmpty ? 'No feedback provided' : feedback,
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ElevatedButton.icon(
-          onPressed: () => Get.back(),
-          icon: const Icon(Icons.arrow_back),
-          label: const Text('Back'),
+        Text(
+          'FEEDBACK',
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.0,
+            color: Colors.grey,
+          ),
         ),
         const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: () => Get.offAllNamed('/home'),
-          icon: const Icon(Icons.home),
-          label: const Text('Home'),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[200]!, width: 1),
+          ),
+          child: Text(
+            feedback.isEmpty ? 'No additional feedback provided' : feedback,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+              height: 1.8,
+              letterSpacing: 0.3,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Color _getRatingColor(int rating) {
-    if (rating >= 4) return Colors.green;
-    if (rating >= 3) return Colors.orange;
-    return Colors.red;
+  Widget _buildFooterActions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      child: SizedBox(
+        width: double.infinity,
+        child: _buildMinimalButton(
+          label: 'Go to Home',
+          onPressed: () => Get.offAllNamed('/home'),
+          isPrimary: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMinimalButton({
+    required String label,
+    required VoidCallback onPressed,
+    bool isPrimary = false,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: isPrimary ? Colors.black87 : Colors.white,
+          border: Border.all(
+            color: isPrimary ? Colors.black87 : Colors.grey[300]!,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isPrimary ? Colors.white : Colors.black87,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getStatusData(int rating) {
+    if (rating >= 9) {
+      return {
+        'label': 'EXCEPTIONAL',
+        'textColor': const Color(0xFF0D7377),
+        'bgColor': const Color(0xFFF0FDF9),
+        'borderColor': const Color(0xFF0D7377),
+      };
+    } else if (rating >= 7) {
+      return {
+        'label': 'EXCELLENT',
+        'textColor': const Color(0xFF2D5A3D),
+        'bgColor': const Color(0xFFF5F9F7),
+        'borderColor': const Color(0xFF2D5A3D),
+      };
+    } else if (rating >= 5) {
+      return {
+        'label': 'GOOD',
+        'textColor': const Color(0xFF6B5B4D),
+        'bgColor': const Color(0xFFFAF8F5),
+        'borderColor': const Color(0xFF6B5B4D),
+      };
+    } else if (rating >= 3) {
+      return {
+        'label': 'FAIR',
+        'textColor': const Color(0xFF8B6F47),
+        'bgColor': const Color(0xFFFEF9F0),
+        'borderColor': const Color(0xFF8B6F47),
+      };
+    } else {
+      return {
+        'label': 'NEEDS IMPROVEMENT',
+        'textColor': const Color(0xFF8B3A3A),
+        'bgColor': const Color(0xFFFDF5F5),
+        'borderColor': const Color(0xFF8B3A3A),
+      };
+    }
+  }
+
+  int _parseRating(dynamic rating) {
+    if (rating is int) return rating;
+    if (rating is String) return int.tryParse(rating) ?? 0;
+    return 0;
   }
 }

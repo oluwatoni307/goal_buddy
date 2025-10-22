@@ -2,6 +2,7 @@
 
 import 'package:get/get.dart';
 import 'package:goal_buddy/features/onboarding/pages/onboarding_page1.dart';
+import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'features/dashboard/pages/dashboard_page3.dart';
 import 'features/goal/goal_controller.dart';
@@ -18,11 +19,13 @@ import 'features/dashboard/pages/dashboard_page1.dart';
 import 'features/dashboard/dashboard_controller.dart';
 
 import 'features/onboarding/onboarding_controller.dart';
+import 'features/profile/profile_controller.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/schedule/pages/schedule_page1.dart';
 import 'features/schedule/schedule_controller.dart';
 import 'features/task/pages/task_page1.dart';
 import 'features/task/task_controller.dart';
+import 'services/api_service.dart';
 import 'settings/settings_screen.dart';
 
 class Routes {
@@ -112,6 +115,27 @@ class Routes {
       name: milestoneDetail,
       page: () => const MilestoneDetailScreen(),
       binding: _GoalDisplayBinding(), // ✅ ADDED BINDING
+    ),
+    GetPage(
+      name: Routes.profile,
+      page: () => const ProfileView(),
+      binding: BindingsBuilder(() {
+        // Register services if not already registered
+        if (!Get.isRegistered<SupabaseService>()) {
+          Get.put(SupabaseService());
+        }
+        if (!Get.isRegistered<ApiService>()) {
+          Get.put(ApiService());
+        }
+
+        // Now register controller with dependencies
+        Get.put(
+          ProfileController(
+            supabaseService: Get.find<SupabaseService>(),
+            apiService: Get.find<ApiService>(),
+          ),
+        );
+      }),
     ),
   ];
 }

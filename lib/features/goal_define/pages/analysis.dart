@@ -57,16 +57,18 @@ class GoalAnalysisScreen extends GetView<GoalCreationController> {
                       ),
                       const SizedBox(width: 16),
                       ElevatedButton(
-                        onPressed: controller.isAnalyzing.value 
-                          ? null 
-                          : () => controller.reAnalyze(),
+                        onPressed: controller.isAnalyzing.value
+                            ? null
+                            : () => controller.reAnalyze(),
                         child: controller.isAnalyzing.value
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Retry'),
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Retry'),
                       ),
                     ],
                   ),
@@ -102,17 +104,26 @@ class GoalAnalysisScreen extends GetView<GoalCreationController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Goal statement
-              Text('Goal',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'Goal',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 4),
-              Text(controller.input.value?.statement ?? 'No goal statement',
-                  style: Theme.of(context).textTheme.bodyLarge),
+              Text(
+                controller.input.value?.statement ?? 'No goal statement',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
               const Divider(height: 32),
 
               // Classification
               _InfoRow('Classification', out.goalClassification),
               _InfoRow('Type', out.goalType),
-              _InfoRow('Complexity', '${out.complexity} (${out.complexityRating.toStringAsFixed(1)})'),
+              _InfoRow(
+                'Complexity',
+                '${out.complexity} (${out.complexityRating.toStringAsFixed(1)})',
+              ),
               _InfoRow('Success probability', out.successProbability),
               _InfoRow('Recommended approach', out.recommendedApproach),
               const Divider(height: 32),
@@ -143,8 +154,9 @@ class GoalAnalysisScreen extends GetView<GoalCreationController> {
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
           child: Obx(() {
             final hasAnalysis = controller.analysis.value != null;
-            final isLoading = controller.isSaving.value || controller.isAnalyzing.value;
-            
+            final isLoading =
+                controller.isSaving.value || controller.isAnalyzing.value;
+
             return Row(
               children: [
                 Expanded(
@@ -156,19 +168,19 @@ class GoalAnalysisScreen extends GetView<GoalCreationController> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: (hasAnalysis && !isLoading) 
-                      ? () => _handleSaveGoal()
-                      : null,
+                    onPressed: (hasAnalysis && !isLoading)
+                        ? () => _handleSaveGoal()
+                        : null,
                     child: controller.isSaving.value
                         ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                              strokeWidth: 2, 
-                              color: Colors.white
+                              strokeWidth: 2,
+                              color: Colors.white,
                             ),
                           )
-                        : const Text('Save & Continue'),
+                        : const Text('Save'),
                   ),
                 ),
               ],
@@ -201,19 +213,21 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 140,
-              child: Text(label,
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
-            ),
-            Expanded(child: Text(value)),
-          ],
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 140,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
         ),
-      );
+        Expanded(child: Text(value)),
+      ],
+    ),
+  );
 }
 
 class _Chip extends StatelessWidget {

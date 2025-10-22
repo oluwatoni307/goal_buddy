@@ -11,7 +11,7 @@ class WeeklyScheduleScreen extends GetView<ScheduleController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weekly Schedule'),
+        title: const Text('Schedule'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -19,23 +19,10 @@ class WeeklyScheduleScreen extends GetView<ScheduleController> {
           ),
         ],
       ),
-      bottomNavigationBar: NavBar(currentIndex: 2), // for home
-
+      bottomNavigationBar: NavBar(currentIndex: 2),
       body: Obx(() {
         if (controller.loading.value && controller.schedule.value == null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  'Loading schedule...',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (controller.error.value.isNotEmpty) {
@@ -55,7 +42,7 @@ class WeeklyScheduleScreen extends GetView<ScheduleController> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                FilledButton.icon(
+                TextButton.icon(
                   onPressed: () => controller.refreshSchedule(),
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
@@ -72,20 +59,17 @@ class WeeklyScheduleScreen extends GetView<ScheduleController> {
 
         return RefreshIndicator(
           onRefresh: () => controller.refreshSchedule(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
+          child: ListView(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _DayCard(day: 'Monday', slots: sched.monday),
-                _DayCard(day: 'Tuesday', slots: sched.tuesday),
-                _DayCard(day: 'Wednesday', slots: sched.wednesday),
-                _DayCard(day: 'Thursday', slots: sched.thursday),
-                _DayCard(day: 'Friday', slots: sched.friday),
-                _DayCard(day: 'Saturday', slots: sched.saturday),
-                _DayCard(day: 'Sunday', slots: sched.sunday),
-              ],
-            ),
+            children: [
+              _DaySection(day: 'Monday', slots: sched.monday),
+              _DaySection(day: 'Tuesday', slots: sched.tuesday),
+              _DaySection(day: 'Wednesday', slots: sched.wednesday),
+              _DaySection(day: 'Thursday', slots: sched.thursday),
+              _DaySection(day: 'Friday', slots: sched.friday),
+              _DaySection(day: 'Saturday', slots: sched.saturday),
+              _DaySection(day: 'Sunday', slots: sched.sunday),
+            ],
           ),
         );
       }),
@@ -93,139 +77,54 @@ class WeeklyScheduleScreen extends GetView<ScheduleController> {
   }
 }
 
-class _DayCard extends StatelessWidget {
+class _DaySection extends StatelessWidget {
   final String day;
   final List<TimeSlotEntry> slots;
 
-  const _DayCard({required this.day, required this.slots});
+  const _DaySection({required this.day, required this.slots});
 
   @override
   Widget build(BuildContext context) {
     final isToday = _isToday(day);
     final theme = Theme.of(context);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: isToday
-            ? BorderSide(color: theme.colorScheme.primary, width: 2)
-            : BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: isToday
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Center(
-                    child: Text(
-                      day.substring(0, 1),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: isToday
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Day header
+          Row(
+            children: [
+              Text(
+                day,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isToday
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            day,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: isToday
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface,
-                            ),
-                          ),
-                          if (isToday) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                'Today',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.onPrimary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        slots.isEmpty
-                            ? 'No activities scheduled'
-                            : '${slots.length} ${slots.length == 1 ? 'activity' : 'activities'}',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (slots.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Divider(color: theme.colorScheme.outlineVariant),
-              const SizedBox(height: 12),
-              ...slots.map((slot) => _TimeSlotItem(slot: slot)),
-            ] else ...[
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.event_available,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Free day - no scheduled activities',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(width: 12),
+              Text(
+                slots.isEmpty ? 'Free' : '${slots.length}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+
+          // Time slots
+          if (slots.isEmpty)
+            Container(
+              height: 1,
+              color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+            )
+          else
+            ...slots.map((slot) => _TimeSlotRow(slot: slot)),
+        ],
       ),
     );
   }
@@ -245,10 +144,10 @@ class _DayCard extends StatelessWidget {
   }
 }
 
-class _TimeSlotItem extends StatelessWidget {
+class _TimeSlotRow extends StatelessWidget {
   final TimeSlotEntry slot;
 
-  const _TimeSlotItem({required this.slot});
+  const _TimeSlotRow({required this.slot});
 
   @override
   Widget build(BuildContext context) {
@@ -257,151 +156,108 @@ class _TimeSlotItem extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
+        border: Border(
+          left: BorderSide(
+            color: _getPriorityColor(theme, slot.allocatedMinutes),
+            width: 3,
+          ),
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 48,
-            decoration: BoxDecoration(
-              color: _getPriorityColor(context, slot.allocatedMinutes),
-              borderRadius: BorderRadius.circular(2),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Time
+            SizedBox(
+              width: 70,
+              child: Text(
+                controller.convertTo12Hour(slot.timeSlot),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        // TODO: You'll need to fetch milestone title using milestoneId
-                        'Milestone ${slot.milestoneId.substring(0, 8)}...',
-                        style: theme.textTheme.titleMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            const SizedBox(width: 16),
+
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    // TODO: Fetch milestone title using milestoneId
+                    'Milestone ${slot.milestoneId.substring(0, 8)}',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        '${slot.allocatedMinutes} min',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    _FlexibilityBadge(flexibility: slot.flexibility),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 4,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 16,
+                      const SizedBox(width: 8),
+                      _FlexibilityDot(flexibility: slot.flexibility),
+                      const SizedBox(width: 6),
+                      Text(
+                        slot.flexibility,
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          controller.convertTo12Hour(slot.timeSlot),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.timer_outlined,
-                          size: 16,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${slot.allocatedMinutes} min',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Color _getPriorityColor(BuildContext context, int minutes) {
-    final theme = Theme.of(context);
+  Color _getPriorityColor(ThemeData theme, int minutes) {
     if (minutes >= 120) return theme.colorScheme.error;
-    if (minutes >= 60) return const Color(0xFFFF9500); // warning color
+    if (minutes >= 60) return theme.colorScheme.tertiary;
     if (minutes >= 30) return theme.colorScheme.primary;
-    return const Color(0xFF146C2E); // success color
+    return theme.colorScheme.secondary;
   }
 }
 
-class _FlexibilityBadge extends StatelessWidget {
+class _FlexibilityDot extends StatelessWidget {
   final String flexibility;
 
-  const _FlexibilityBadge({required this.flexibility});
+  const _FlexibilityDot({required this.flexibility});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final config = _getFlexibilityConfig(flexibility);
+    final color = _getFlexibilityColor(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: config.color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: config.color.withOpacity(0.3), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(config.icon, size: 12, color: config.color),
-          const SizedBox(width: 4),
-          Text(
-            flexibility.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: config.color,
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-            ),
-          ),
-        ],
-      ),
+      width: 6,
+      height: 6,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 
-  ({Color color, IconData icon}) _getFlexibilityConfig(String flex) {
-    switch (flex.toLowerCase()) {
+  Color _getFlexibilityColor(BuildContext context) {
+    final theme = Theme.of(context);
+    switch (flexibility.toLowerCase()) {
       case 'high':
-        return (
-          color: const Color(0xFF146C2E), // Green
-          icon: Icons.swap_horiz,
-        );
+        return theme.colorScheme.secondary;
       case 'medium':
-        return (
-          color: const Color(0xFFFF9500), // Orange
-          icon: Icons.drag_indicator,
-        );
+        return theme.colorScheme.tertiary;
       case 'low':
       default:
-        return (
-          color: const Color(0xFFDC3545), // Red
-          icon: Icons.push_pin,
-        );
+        return theme.colorScheme.error;
     }
   }
 }

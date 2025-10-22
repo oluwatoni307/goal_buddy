@@ -57,21 +57,38 @@ class TaskCompletionController extends GetxController {
       return;
     }
 
-    if (!_isValidForSubmission(currentDto)) {
+    // Validate completion notes first (mandatory)
+    if (currentDto.completionDescription.trim().isEmpty) {
+      Get.snackbar('Validation', 'Please add completion notes');
       return;
     }
 
     saving(true);
     try {
-      final response = await Get.find<ApiService>().patch(
-        '/tasks/${currentDto.id}',
-        data: currentDto.toJson(),
+      // Create updated DTO with completed status
+      final completedDto = TaskCompletionDto(
+        id: currentDto.id,
+        name: currentDto.name,
+        description: currentDto.description,
+        completionDescription: currentDto.completionDescription,
+        status: 'completed', // Automatically set to completed on save
+        objective: currentDto.objective,
+        taskType: currentDto.taskType,
+        cognitiveLoad: currentDto.cognitiveLoad,
+        timeAllocated: currentDto.timeAllocated,
+        specificActions: currentDto.specificActions,
+        successMetric: currentDto.successMetric,
       );
 
-      // Navigate to progress page with the response data
+      final response = await Get.find<ApiService>().patch(
+        '/tasks/${completedDto.id}',
+        data: completedDto.toJson(),
+      );
+
+      // Navigate to progress page
       Get.to(
         () => TaskProgressPage(
-          task: currentDto,
+          task: completedDto,
           progressData: response.data ?? {},
         ),
       );
@@ -80,6 +97,8 @@ class TaskCompletionController extends GetxController {
         'Error',
         'Failed to save task: ${e.response?.data ?? e.message}',
       );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to save task: $e');
     } finally {
       saving(false);
     }
@@ -123,21 +142,5 @@ class TaskCompletionController extends GetxController {
         successMetric: currentDto.successMetric,
       );
     }
-  }
-
-  // Validate DTO before submission
-  bool _isValidForSubmission(TaskCompletionDto dto) {
-    if (dto.status != 'completed') {
-      Get.snackbar(
-        'Validation',
-        'Please mark the task as completed before saving',
-      );
-      return false;
-    }
-    if (dto.completionDescription.trim().isEmpty) {
-      Get.snackbar('Validation', 'Please add completion notes');
-      return false;
-    }
-    return true;
   }
 }

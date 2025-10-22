@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'auth/login_controller.dart';
+import 'bannerService.dart';
 import 'services/api_service.dart';
 
 void main() async {
@@ -17,6 +18,8 @@ void main() async {
   );
 
   // Initialize services
+  Get.put(BannerService());
+
   Get.put(ApiService(), permanent: true);
   Get.put(AuthController(), permanent: true);
 

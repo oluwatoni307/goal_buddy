@@ -115,7 +115,7 @@ class GoalsListScreen extends GetView<GoalDisplayController> {
             ],
           ),
         ),
-        bottomNavigationBar: NavBar(currentIndex: 2),
+        bottomNavigationBar: NavBar(currentIndex: 1),
         body: Obx(() {
           // Loading state
           if (controller.goalsLoading.value &&

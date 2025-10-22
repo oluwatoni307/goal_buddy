@@ -1,10 +1,12 @@
 import 'package:get/get.dart';
+import '../../bannerService.dart';
 import 'goal_define_model.dart';
 import '/services/api_service.dart';
 import 'dart:convert' show jsonDecode;
 
 class GoalCreationController extends GetxController {
   final ApiService _api = Get.find<ApiService>();
+  final BannerService _bannerService = Get.find<BannerService>();
 
   /* ---------- Reactive state shared by all pages ---------- */
   final Rx<GoalInputDto?> input = Rx(null);
@@ -126,7 +128,7 @@ class GoalCreationController extends GetxController {
     }
   }
 
-  /* ---------- Save Goal (Input + Key Analysis Fields Only) ---------- */
+  /* ---------- Save Goal (Fire-and-Forget with Background Processing) ---------- */
   Future<bool> saveGoal() async {
     final inputData = input.value;
     final analysisData = analysis.value;
@@ -143,7 +145,6 @@ class GoalCreationController extends GetxController {
 
     try {
       isSaving(true);
-      isLoading(true);
       error('');
 
       print('Preparing to save goal...');
@@ -165,12 +166,12 @@ class GoalCreationController extends GetxController {
 
       print('Saving goal with data: $jsonData');
 
-      await _api.post('/goals/verify_and_save', data: jsonData);
-
-      print('Goal saved successfully');
-
-      // Navigate after successful save
+      // Navigate immediately (user doesn't wait)
       Get.offAllNamed('/goals');
+
+      // Fire-and-forget: Process in background without awaiting
+      _processGoalInBackground(jsonData);
+
       return true;
     } catch (e) {
       error('Failed to save goal: ${e.toString()}');
@@ -178,7 +179,32 @@ class GoalCreationController extends GetxController {
       return false;
     } finally {
       isSaving(false);
-      isLoading(false);
+    }
+  }
+
+  /* ---------- Background Processing (Fire-and-Forget) ---------- */
+  Future<void> _processGoalInBackground(Map<String, dynamic> jsonData) async {
+    try {
+      _bannerService.showInfo(
+        'Finalizing your goal...',
+        duration: const Duration(seconds: 60),
+      );
+
+      print('Starting background goal processing...');
+
+      await _api.post('/goals/verify_and_save', data: jsonData);
+
+      print('Goal verified and saved successfully in background');
+      _bannerService.showSuccess(
+        'Goal saved successfully!',
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      print('Background processing error: $e');
+      _bannerService.showError(
+        'Failed to finalize goal. Please try again.',
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 

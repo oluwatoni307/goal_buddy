@@ -5,10 +5,6 @@ import '../../auth/auth_service.dart';
 import '../../auth/user_model.dart';
 import '../../services/api_service.dart';
 import 'profile_model.dart';
-// Import your existing services
-// import '../../services/supabase_service.dart';
-// import '../../services/api_service.dart';
-// import '../../models/user_model.dart';
 
 class ProfileController extends GetxController {
   final SupabaseService _supabaseService;

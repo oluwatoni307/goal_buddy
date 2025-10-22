@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:goal_buddy/navBar.dart';
 import 'profile_controller.dart';
 import 'profile_model.dart';
 
@@ -14,6 +15,8 @@ class ProfileView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile'), centerTitle: true),
+      bottomNavigationBar: NavBar(currentIndex: 3),
+
       body: Obx(() {
         // Loading state
         if (controller.isLoading.value) {
