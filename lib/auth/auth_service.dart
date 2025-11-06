@@ -23,7 +23,18 @@ class SupabaseService {
           user: User(id: response.user!.id, email: response.user!.email ?? ''),
         );
       }
-      return AuthResponse(success: false, error: 'Sign up failed');
+
+      // If response.user is null, Supabase likely requires email confirmation.
+      // Try to sign in immediately — this will only work if confirmation is NOT required.
+      final loginResult = await login(email: email, password: password);
+      if (loginResult.success) return loginResult;
+
+      // Otherwise return a clearer message so UI can prompt the user to check email.
+      return AuthResponse(
+        success: false,
+        error:
+            'Sign up created but no session was returned. If your project requires email confirmation, check your inbox and verify your email before logging in.',
+      );
     } catch (e) {
       return AuthResponse(success: false, error: e.toString());
     }
@@ -69,5 +80,13 @@ class SupabaseService {
   // Check if user is logged in
   bool isLoggedIn() {
     return _supabase.auth.currentUser != null;
+  }
+
+  // Start listening to auth state changes (use in your app to update UI when session changes)
+  void startAuthListener(void Function(Session? session) onChange) {
+    _supabase.auth.onAuthStateChange.listen((data) {
+      // data.event and data.session available
+      onChange(data.session);
+    });
   }
 }

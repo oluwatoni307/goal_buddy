@@ -18,8 +18,8 @@ class ProfileStats {
   /// Parse from API response
   factory ProfileStats.fromJson(Map<String, dynamic> json) {
     return ProfileStats(
-      activeGoals: json['activeGoals'] as int,
-      completedGoals: json['completedGoals'] as int,
+      activeGoals: json['active_goals'] as int,
+      completedGoals: json['completed_goals'] as int,
     );
   }
 

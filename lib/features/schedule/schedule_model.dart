@@ -2,7 +2,7 @@ class TimeSlotEntry {
   final String day;
   final String timeSlot;
   final String flexibility; // Default to 'undefined'
-  final String milestoneId;
+  final String Milestone_name;
   final int priorityScore; // Default to 0
   final int allocatedMinutes;
 
@@ -10,7 +10,7 @@ class TimeSlotEntry {
     required this.day,
     required this.timeSlot,
     required this.flexibility,
-    required this.milestoneId,
+    required this.Milestone_name,
     required this.priorityScore,
     required this.allocatedMinutes,
   });
@@ -20,7 +20,7 @@ class TimeSlotEntry {
         day: day,
         timeSlot: json['time_slot'] as String,
         flexibility: json['flexibility'] as String? ?? 'undefined',
-        milestoneId: json['milestone_id'] as String,
+        Milestone_name: json['Milestone_name'] as String,
         priorityScore: json['priority_score'] as int? ?? 0,
         allocatedMinutes: json['allocated_minutes'] as int,
       );
@@ -28,7 +28,7 @@ class TimeSlotEntry {
   Map<String, dynamic> toJson() => {
     'time_slot': timeSlot,
     'flexibility': flexibility,
-    'milestone_id': milestoneId,
+    'Milestone_name': Milestone_name,
     'priority_score': priorityScore,
     'allocated_minutes': allocatedMinutes,
   };

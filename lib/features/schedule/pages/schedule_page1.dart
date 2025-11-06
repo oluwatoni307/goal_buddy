@@ -190,7 +190,7 @@ class _TimeSlotRow extends StatelessWidget {
                 children: [
                   Text(
                     // TODO: Fetch milestone title using milestoneId
-                    'Milestone ${slot.milestoneId.substring(0, 8)}',
+                    slot.Milestone_name,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),

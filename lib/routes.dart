@@ -2,6 +2,7 @@
 
 import 'package:get/get.dart';
 import 'package:goal_buddy/features/onboarding/pages/onboarding_page1.dart';
+import 'package:goal_buddy/splash.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'features/dashboard/pages/dashboard_page3.dart';
@@ -40,6 +41,7 @@ class Routes {
   static const taskComplete = '/tasks/:taskId/complete';
   static const onboarding = '/onboarding';
   static const weeklySchedule = '/schedule';
+  static const splash = '/splash';
 
   // ----- route names -----
   static const goalsList = '/goals';
@@ -55,6 +57,7 @@ class Routes {
         Get.put(HomeController());
       }),
     ),
+    GetPage(name: splash, page: () => const SplashScreen()),
 
     GetPage(
       name: weeklySchedule,

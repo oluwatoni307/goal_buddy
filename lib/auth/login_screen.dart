@@ -301,36 +301,6 @@ class _AuthScreenState extends State<AuthScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Social login button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            side: BorderSide(color: Colors.blue.shade200),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {},
-                          icon: Icon(
-                            Icons.g_mobiledata,
-                            size: 28,
-                            color: Colors.blue.shade700,
-                          ),
-                          label: Text(
-                            "Continue with Google",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.blue.shade900,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
                       // Switch between login/signup
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

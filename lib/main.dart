@@ -19,8 +19,9 @@ void main() async {
 
   // Initialize services
   Get.put(BannerService());
-
   Get.put(ApiService(), permanent: true);
+
+  // Initialize AuthController - this will handle auto-routing
   Get.put(AuthController(), permanent: true);
 
   // Set preferred orientations (optional)
