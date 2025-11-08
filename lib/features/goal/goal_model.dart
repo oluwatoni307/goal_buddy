@@ -2,6 +2,7 @@
 // GENERATED for feature: goal
 // Data deduplication implemented
 // FIXED: Corrected parsing issues for milestone and task data
+// UPDATED: Added proper allocated_minutes conversion
 
 class Goal {
   final String id;
@@ -52,11 +53,51 @@ class TimeslotAllocation {
   });
 
   factory TimeslotAllocation.fromJson(Map<String, dynamic> json) {
+    int minutes = 0;
+
+    // Handle allocated_minutes conversion
+    if (json['allocated_minutes'] != null) {
+      if (json['allocated_minutes'] is int) {
+        minutes = json['allocated_minutes'] as int;
+      } else if (json['allocated_minutes'] is String) {
+        minutes = _parseAllocatedMinutes(json['allocated_minutes'] as String);
+      }
+    }
+
     return TimeslotAllocation(
       day: json['day'] ?? '',
       timeslot: json['timeslot'] ?? '',
-      allocatedMinutes: json['allocated_minutes'] ?? 0,
+      allocatedMinutes: minutes,
     );
+  }
+
+  static int _parseAllocatedMinutes(String str) {
+    try {
+      // Use regex to extract time range pattern (HH:MM-HH:MM)
+      final timeRangeRegex = RegExp(
+        r'(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})',
+      );
+      final match = timeRangeRegex.firstMatch(str);
+
+      if (match != null) {
+        // Extract hours and minutes from the regex groups
+        final startHour = int.parse(match.group(1)!);
+        final startMin = int.parse(match.group(2)!);
+        final endHour = int.parse(match.group(3)!);
+        final endMin = int.parse(match.group(4)!);
+
+        // Calculate total minutes
+        final startTotalMin = startHour * 60 + startMin;
+        final endTotalMin = endHour * 60 + endMin;
+
+        return endTotalMin - startTotalMin;
+      }
+
+      // If no time range found, try parsing as integer
+      return int.tryParse(str.trim()) ?? 0;
+    } catch (e) {
+      return 0;
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -298,6 +339,36 @@ class Task {
     return match?.group(1);
   }
 
+  // Helper method to convert time range string to minutes
+  static int _parseAllocatedMinutes(String str) {
+    try {
+      // Use regex to extract time range pattern (HH:MM-HH:MM)
+      final timeRangeRegex = RegExp(
+        r'(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})',
+      );
+      final match = timeRangeRegex.firstMatch(str);
+
+      if (match != null) {
+        // Extract hours and minutes from the regex groups
+        final startHour = int.parse(match.group(1)!);
+        final startMin = int.parse(match.group(2)!);
+        final endHour = int.parse(match.group(3)!);
+        final endMin = int.parse(match.group(4)!);
+
+        // Calculate total minutes
+        final startTotalMin = startHour * 60 + startMin;
+        final endTotalMin = endHour * 60 + endMin;
+
+        return endTotalMin - startTotalMin;
+      }
+
+      // If no time range found, try parsing as integer
+      return int.tryParse(str.trim()) ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   factory Task.fromJson(Map<String, dynamic> json) {
     try {
       // Parse each field with defensive null handling
@@ -308,7 +379,18 @@ class Task {
       final description = json['description']?.toString() ?? '';
       final rank = json['rank'] as int?;
       final day = json['day'] as String?;
-      final allocatedMinutes = json['allocated_minutes'] as int?;
+
+      // Handle allocated_minutes conversion
+      int? allocatedMinutes;
+      if (json['allocated_minutes'] != null) {
+        if (json['allocated_minutes'] is int) {
+          allocatedMinutes = json['allocated_minutes'] as int;
+        } else if (json['allocated_minutes'] is String) {
+          allocatedMinutes = _parseAllocatedMinutes(
+            json['allocated_minutes'] as String,
+          );
+        }
+      }
 
       final status = json['status'] != null
           ? _parseTaskStatus(json['status'].toString())

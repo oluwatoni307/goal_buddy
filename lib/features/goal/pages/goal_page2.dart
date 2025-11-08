@@ -1,23 +1,47 @@
-// UPDATED Goal Detail Screen with Controller-First Navigation
+// UPDATED Goal Detail Screen with StatefulWidget and Fixed Loading
 // MODERNIZED with Material 3 and latest Flutter syntax
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../goal_controller.dart';
 import '../goal_model.dart';
 
-class GoalDetailScreen extends GetView<GoalDisplayController> {
+class GoalDetailScreen extends StatefulWidget {
   const GoalDetailScreen({super.key});
+
+  @override
+  State<GoalDetailScreen> createState() => _GoalDetailScreenState();
+}
+
+class _GoalDetailScreenState extends State<GoalDetailScreen> {
+  late final GoalDisplayController controller;
+  late final String goalId;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Get dependencies
+    controller = Get.find<GoalDisplayController>();
+    goalId = Get.parameters['id'] ?? '';
+
+    // Validate goal ID
+    if (goalId.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.snackbar('Error', 'Invalid goal ID');
+        Get.back();
+      });
+      return;
+    }
+
+    // Load milestones for this goal
+    // Controller handles caching and prevents duplicate loads
+    controller.loadMilestones(goalId);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final goalId = Get.parameters['id'] ?? '';
-
-    // Trigger smart loading if needed (non-blocking)
-    if (controller.shouldLoadMilestones(goalId)) {
-      Future.microtask(() => controller.loadMilestones(goalId));
-    }
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
@@ -422,84 +446,101 @@ class _ModernMilestoneTile extends GetView<GoalDisplayController> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        child: Card(
-          elevation: 0,
-          color: _getCardColor(colorScheme),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: _getBorderColor(colorScheme), width: 1),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              // ✅ USE CONTROLLER NAVIGATION METHOD
-              controller.navigateToMilestone(milestone.id);
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  // Status Icon
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(colorScheme).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+        child: Opacity(
+          opacity: status == MilestoneStatus.active ? 1.0 : 0.6,
+          child: Card(
+            elevation: 0,
+            color: _getCardColor(colorScheme),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: _getBorderColor(colorScheme), width: 1),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: status == MilestoneStatus.active
+                  ? () {
+                      // ✅ USE CONTROLLER NAVIGATION METHOD
+                      controller.navigateToMilestone(milestone.id);
+                    }
+                  : () {
+                      // Show snackbar for non-active milestones
+                      Get.snackbar(
+                        'Not Available',
+                        'Task not created yet',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                        colorText: colorScheme.onSurface,
+                        margin: const EdgeInsets.all(16),
+                        borderRadius: 12,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    // Status Icon
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(colorScheme).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _getStatusIcon(),
+                        size: 20,
+                        color: _getStatusColor(colorScheme),
+                      ),
                     ),
-                    child: Icon(
-                      _getStatusIcon(),
-                      size: 20,
-                      color: _getStatusColor(colorScheme),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+                    const SizedBox(width: 16),
 
-                  // Content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          milestone.objective,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: status == MilestoneStatus.completed
-                                ? colorScheme.onSurfaceVariant
-                                : colorScheme.onSurface,
-                            decoration: status == MilestoneStatus.completed
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule,
-                              size: 14,
-                              color: colorScheme.onSurfaceVariant,
+                    // Content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            milestone.objective,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: status == MilestoneStatus.completed
+                                  ? colorScheme.onSurfaceVariant
+                                  : colorScheme.onSurface,
+                              decoration: status == MilestoneStatus.completed
+                                  ? TextDecoration.lineThrough
+                                  : null,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _formatDate(milestone.targetDate),
-                              style: theme.textTheme.labelMedium?.copyWith(
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.schedule,
+                                size: 14,
                                 color: colorScheme.onSurfaceVariant,
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatDate(milestone.targetDate),
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // Navigation Arrow
-                  Icon(
-                    Icons.chevron_right,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ],
+                    // Navigation Arrow
+                    Icon(
+                      Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

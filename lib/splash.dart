@@ -20,11 +20,11 @@ class SplashScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Your app logo
-                Image.asset(
-                  'assets/logo.png', // Replace with your logo path
-                  width: 120,
-                  height: 120,
-                ),
+                // Image.asset(
+                //   'assets/logo.png', // Replace with your logo path
+                //   width: 120,
+                //   height: 120,
+                // ),
                 const SizedBox(height: 32),
 
                 // App name
@@ -56,31 +56,6 @@ class SplashScreen extends StatelessWidget {
         }
         return const SizedBox.shrink();
       }),
-    );
-  }
-}
-
-// Alternative minimal splash screen
-class MinimalSplashScreen extends StatelessWidget {
-  const MinimalSplashScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.track_changes,
-              size: 80,
-              color: Theme.of(context).primaryColor,
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-          ],
-        ),
-      ),
     );
   }
 }

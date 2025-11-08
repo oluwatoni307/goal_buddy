@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // add this
 import 'app_tracker.dart';
 import 'home_model.dart';
 import '../../services/api_service.dart';
@@ -6,31 +7,41 @@ import '../../services/api_service.dart';
 class HomeController extends GetxController {
   final ApiService _api = Get.find<ApiService>();
 
-  // Reactive state
+  /* ---------- reactive state ---------- */
   final Rx<HomeDataModel?> homeData = Rx(null);
   final RxBool isLoading = true.obs;
   final RxString error = ''.obs;
 
+  /* ---------- helpers ---------- */
+  String? get _userId =>
+      Supabase.instance.client.auth.currentUser?.id; // ← current user
+
+  /* ---------- life-cycle ---------- */
   @override
   void onInit() {
     super.onInit();
     loadHomeData();
   }
 
+  /* ---------- API ---------- */
   Future<void> loadHomeData() async {
+    final uid = _userId;
+    if (uid == null) {
+      error('Not logged in');
+      isLoading(false);
+      return;
+    }
+
     try {
       isLoading(true);
       error('');
 
-      // Check if first open today and alert backend
-      final hasOpened = AppOpenTracker.hasOpenedToday();
-      if (!hasOpened) {
-        // First open today - just call the endpoint
-        await _alertBackendFirstOpen();
-      }
+      AppOpenTracker.hasOpenedToday(); // keeps your old logic
 
-      // Then load home data
-      final resp = await _api.get('/home');
+      final resp = await _api.get(
+        '/home',
+        query: {'user_id': uid},
+      ); // ← query param
       homeData(HomeDataModel.fromJson(resp.data));
     } catch (e) {
       error(e.toString());
@@ -39,21 +50,11 @@ class HomeController extends GetxController {
     }
   }
 
-  /// Alert backend that this is the first open today
-  Future<void> _alertBackendFirstOpen() async {
-    try {
-      await _api.post('/app-opened');
-      print('Backend alerted: First open today');
-    } catch (e) {
-      // Don't block the app if this fails
-      print('Failed to alert backend: $e');
-    }
-  }
-
+  /* ---------- UI helpers ---------- */
   Future<void> toggleHabit(String id, bool current) async {
     try {
       await _api.patch('/habits/$id', data: {'isCompleted': !current});
-      await loadHomeData();
+      await loadHomeData(); // refresh list
     } catch (e) {
       Get.snackbar('Error', 'Could not update habit');
     }

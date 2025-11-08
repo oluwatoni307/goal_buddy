@@ -1,6 +1,6 @@
-// UPDATED GoalDisplayController with Navigation Helpers + Smart Loading
-// GENERATED for feature: goal
-// Added navigation methods for consistent controller-first pattern
+// FIXED GoalDisplayController - No Race Conditions
+// File: lib/features/goal/goal_controller.dart
+// Navigation is pure, screens handle loading in initState()
 
 import 'package:get/get.dart';
 import 'dart:developer' as developer;
@@ -28,7 +28,7 @@ class GoalDisplayController extends GetxController {
   final RxBool tasksLoading = false.obs;
   final RxString tasksError = ''.obs;
 
-  /* ---------- Individual milestone data (for detail screen) ---------- */
+  /* ---------- Individual milestone data ---------- */
   final Rx<Milestone?> currentMilestoneData = Rx<Milestone?>(null);
   final RxBool milestoneDataLoading = false.obs;
 
@@ -50,7 +50,6 @@ class GoalDisplayController extends GetxController {
     }
     print('---');
 
-    // Also log to dart:developer for better debugging
     developer.log(
       message,
       name: 'GoalDisplayController',
@@ -72,92 +71,40 @@ class GoalDisplayController extends GetxController {
     return totalCompletion / totalGoals;
   }
 
-  /* ---------- Smart Loading Checks ---------- */
+  /* ========================================
+     NAVIGATION HELPERS - Pure Navigation
+     Screens handle their own loading
+     ======================================== */
 
-  /// Check if milestones need to be loaded for a goal
-  bool shouldLoadMilestones(String goalId) {
-    if (goalId.isEmpty) {
-      _log('Cannot check milestones - empty goal ID', isError: true);
-      return false;
-    }
-
-    // Load if different goal OR no data loaded yet
-    final needsLoad =
-        currentGoalId.value != goalId || goalMilestones.value == null;
-
-    if (!needsLoad) {
-      _log('Milestones already loaded for goal: $goalId');
-    }
-
-    return needsLoad;
-  }
-
-  /// Check if tasks need to be loaded for a milestone
-  bool shouldLoadTasks(String milestoneId) {
-    if (milestoneId.isEmpty) {
-      _log('Cannot check tasks - empty milestone ID', isError: true);
-      return false;
-    }
-
-    // Load if different milestone OR no tasks loaded yet
-    final needsLoad =
-        currentMilestoneId.value != milestoneId || milestoneTasks.isEmpty;
-
-    if (!needsLoad) {
-      _log('Tasks already loaded for milestone: $milestoneId');
-    }
-
-    return needsLoad;
-  }
-
-  /* ---------- Navigation Helpers (Controller-First Pattern) ---------- */
-
-  /// Navigate to goal detail screen with smart loading
+  /// Navigate to goal detail screen
   void navigateToGoal(String goalId) {
     if (goalId.isEmpty) {
       _log('Cannot navigate to goal - empty ID', isError: true);
+      Get.snackbar('Error', 'Invalid goal ID');
       return;
     }
 
     _log('Navigating to goal: $goalId');
-
-    // Set controller state FIRST (synchronous)
-    currentGoalId(goalId);
-
-    // Navigate immediately (non-blocking)
     Get.toNamed('/goals/$goalId');
-
-    // Load milestones in background if needed
-    if (shouldLoadMilestones(goalId)) {
-      Future.microtask(() => loadMilestones(goalId));
-    }
   }
 
-  /// Navigate to milestone detail screen with smart loading
+  /// Navigate to milestone detail screen
   void navigateToMilestone(String milestoneId) {
     if (milestoneId.isEmpty) {
       _log('Cannot navigate to milestone - empty ID', isError: true);
+      Get.snackbar('Error', 'Invalid milestone ID');
       return;
     }
 
     _log('Navigating to milestone: $milestoneId');
-
-    // Set controller state FIRST (synchronous)
-    currentMilestoneId(milestoneId);
-
-    // Navigate immediately (non-blocking) - CORRECTED ROUTE
     Get.toNamed('/milestones/$milestoneId');
-
-    // Load tasks in background if needed
-    if (shouldLoadTasks(milestoneId)) {
-      Future.microtask(() => loadTasks(milestoneId));
-    }
   }
 
   /// Navigate to task detail screen
   void navigateToTask(String taskId) {
     if (taskId.isEmpty) {
       _log('Cannot navigate to task - empty ID', isError: true);
+      Get.snackbar('Error', 'Invalid task ID');
       return;
     }
 
@@ -170,14 +117,29 @@ class GoalDisplayController extends GetxController {
   void onInit() {
     super.onInit();
     _log('Controller initialized');
-    loadGoals(); // initial fetch
+    loadGoals();
   }
 
-  /* ---------- Goals list ---------- */
+  @override
+  void onClose() {
+    // Clean up to prevent memory leaks
+    activeGoals.clear();
+    completedGoals.clear();
+    goalMilestones.value = null;
+    milestoneTasks.clear();
+    super.onClose();
+  }
+
+  /* ========================================
+     DATA LOADING METHODS
+     Pure functions - no navigation logic
+     Built-in caching to prevent duplicate loads
+     ======================================== */
+
+  /// Load all goals
   Future<void> loadGoals({bool force = false}) async {
     final endpoint = '/goals';
 
-    // Skip if already loading
     if (!force && goalsLoading.value) {
       _log('Goals already loading, skipping duplicate request');
       return;
@@ -198,16 +160,12 @@ class GoalDisplayController extends GetxController {
       _log(
         'Goals response received',
         endpoint: endpoint,
-        data:
-            'Status: ${resp.statusCode}, Response type: ${resp.data.runtimeType}',
+        data: 'Status: ${resp.statusCode}',
       );
 
-      // Safe null check for response data
       if (resp.data == null) {
         throw Exception('Response data is null');
       }
-
-      _log('Raw response data', endpoint: endpoint, data: resp.data);
 
       final List<dynamic> dataList = resp.data is List ? resp.data as List : [];
       final raw = dataList
@@ -237,9 +195,9 @@ class GoalDisplayController extends GetxController {
     }
   }
 
-  /* ---------- Milestones for a goal ---------- */
+  /// Load milestones for a goal
+  /// Includes built-in caching - won't reload if already loaded for this goal
   Future<void> loadMilestones(String goalId, {bool force = false}) async {
-    // VALIDATION: Check if goalId is empty or null
     if (goalId.isEmpty) {
       final errorMsg = 'Goal ID is required to load milestones';
       milestonesError(errorMsg);
@@ -247,28 +205,26 @@ class GoalDisplayController extends GetxController {
       return;
     }
 
-    // Skip if already loaded (unless forced)
-    if (!force && !shouldLoadMilestones(goalId)) {
+    // ✅ Check if already loaded for THIS specific goal
+    if (!force &&
+        currentGoalId.value == goalId &&
+        goalMilestones.value != null) {
       _log('Skipping milestone load - already loaded for goal: $goalId');
       return;
     }
 
-    // Skip if already loading the same goal
+    // Prevent duplicate concurrent requests for the same goal
     if (!force && milestonesLoading.value && currentGoalId.value == goalId) {
-      _log(
-        'Milestones already loading for this goal, skipping duplicate request',
-      );
+      _log('Milestones already loading for this goal, skipping duplicate');
       return;
     }
 
     final endpoint = '/goals/$goalId/milestones';
-    _log(
-      'Loading milestones...',
-      endpoint: endpoint,
-      data: 'GoalId: $goalId${force ? ' (FORCED)' : ''}',
-    );
+    _log('Loading milestones...', endpoint: endpoint, data: 'GoalId: $goalId');
 
+    // ✅ Set BEFORE making API call to prevent race conditions
     currentGoalId(goalId);
+    goalMilestones.value = null; // Clear stale data immediately
 
     try {
       milestonesLoading(true);
@@ -276,30 +232,30 @@ class GoalDisplayController extends GetxController {
 
       final resp = await _api.get(endpoint);
 
-      _log(
-        'Milestones response received',
-        endpoint: endpoint,
-        data:
-            'Status: ${resp.statusCode}, Response type: ${resp.data.runtimeType}',
-      );
+      _log('Milestones response received', endpoint: endpoint);
 
-      // Safe null check for response data
       if (resp.data == null) {
         throw Exception('Response data is null');
       }
 
-      _log('Raw milestones data', endpoint: endpoint, data: resp.data);
+      // ✅ Only update if we're still viewing this goal
+      if (currentGoalId.value == goalId) {
+        goalMilestones.value = Milestones.fromJson(
+          resp.data as Map<String, dynamic>,
+        );
 
-      goalMilestones.value = Milestones.fromJson(
-        resp.data as Map<String, dynamic>,
-      );
-
-      final count = goalMilestones.value?.milestones.length ?? 0;
-      _log(
-        'Milestones loaded successfully',
-        endpoint: endpoint,
-        data: 'Count: $count',
-      );
+        final count = goalMilestones.value?.milestones.length ?? 0;
+        _log(
+          'Milestones loaded successfully',
+          endpoint: endpoint,
+          data: 'Count: $count',
+        );
+      } else {
+        _log(
+          'Discarding milestone response - goal changed',
+          endpoint: endpoint,
+        );
+      }
     } catch (e, stackTrace) {
       final errorMsg = e.toString();
       milestonesError(errorMsg);
@@ -314,9 +270,9 @@ class GoalDisplayController extends GetxController {
     }
   }
 
-  /* ---------- Tasks for a milestone ---------- */
+  /// Load tasks for a milestone
+  /// Includes built-in caching - won't reload if already loaded for this milestone
   Future<void> loadTasks(String milestoneId, {bool force = false}) async {
-    // VALIDATION: Check if milestoneId is empty or null
     if (milestoneId.isEmpty) {
       final errorMsg = 'Milestone ID is required to load tasks';
       tasksError(errorMsg);
@@ -324,19 +280,19 @@ class GoalDisplayController extends GetxController {
       return;
     }
 
-    // Skip if already loaded (unless forced)
-    if (!force && !shouldLoadTasks(milestoneId)) {
+    // ✅ Check if already loaded for THIS specific milestone
+    if (!force &&
+        currentMilestoneId.value == milestoneId &&
+        milestoneTasks.isNotEmpty) {
       _log('Skipping task load - already loaded for milestone: $milestoneId');
       return;
     }
 
-    // Skip if already loading the same milestone
+    // Prevent duplicate concurrent requests
     if (!force &&
         tasksLoading.value &&
         currentMilestoneId.value == milestoneId) {
-      _log(
-        'Tasks already loading for this milestone, skipping duplicate request',
-      );
+      _log('Tasks already loading for this milestone, skipping duplicate');
       return;
     }
 
@@ -344,10 +300,12 @@ class GoalDisplayController extends GetxController {
     _log(
       'Loading tasks...',
       endpoint: endpoint,
-      data: 'MilestoneId: $milestoneId${force ? ' (FORCED)' : ''}',
+      data: 'MilestoneId: $milestoneId',
     );
 
+    // ✅ Set BEFORE making API call to prevent race conditions
     currentMilestoneId(milestoneId);
+    milestoneTasks.clear(); // Clear stale data immediately
 
     try {
       tasksLoading(true);
@@ -355,32 +313,34 @@ class GoalDisplayController extends GetxController {
 
       final resp = await _api.get(endpoint);
 
-      _log(
-        'Tasks response received',
-        endpoint: endpoint,
-        data:
-            'Status: ${resp.statusCode}, Response type: ${resp.data.runtimeType}',
-      );
+      _log('Tasks response received', endpoint: endpoint);
 
-      // Safe null check for response data
       if (resp.data == null) {
         throw Exception('Response data is null');
       }
 
-      _log('Raw tasks data', endpoint: endpoint, data: resp.data);
+      // ✅ Only update if we're still viewing this milestone
+      if (currentMilestoneId.value == milestoneId) {
+        final List<dynamic> dataList = resp.data is List
+            ? resp.data as List
+            : [];
+        final tasks = dataList
+            .map((e) => Task.fromJson(e as Map<String, dynamic>))
+            .toList();
 
-      final List<dynamic> dataList = resp.data is List ? resp.data as List : [];
-      final tasks = dataList
-          .map((e) => Task.fromJson(e as Map<String, dynamic>))
-          .toList();
+        milestoneTasks.assignAll(tasks);
 
-      milestoneTasks.assignAll(tasks);
-
-      _log(
-        'Tasks loaded successfully',
-        endpoint: endpoint,
-        data: 'Count: ${milestoneTasks.length}',
-      );
+        _log(
+          'Tasks loaded successfully',
+          endpoint: endpoint,
+          data: 'Count: ${milestoneTasks.length}',
+        );
+      } else {
+        _log(
+          'Discarding task response - milestone changed',
+          endpoint: endpoint,
+        );
+      }
     } catch (e, stackTrace) {
       final errorMsg = e.toString();
       tasksError(errorMsg);
@@ -395,7 +355,7 @@ class GoalDisplayController extends GetxController {
     }
   }
 
-  /* ---------- Load individual milestone data ---------- */
+  /// Load individual milestone data
   Future<void> loadMilestoneData(
     String milestoneId, {
     bool force = false,
@@ -406,46 +366,28 @@ class GoalDisplayController extends GetxController {
       return;
     }
 
-    // Skip if already loaded (unless forced)
     if (!force && currentMilestoneData.value?.id == milestoneId) {
       _log('Milestone data already loaded: $milestoneId');
       return;
     }
 
     final endpoint = '/milestones/$milestoneId';
-    _log(
-      'Loading milestone data...',
-      endpoint: endpoint,
-      data: 'MilestoneId: $milestoneId${force ? ' (FORCED)' : ''}',
-    );
+    _log('Loading milestone data...', endpoint: endpoint);
 
     try {
       milestoneDataLoading(true);
 
       final resp = await _api.get(endpoint);
 
-      _log(
-        'Milestone data response received',
-        endpoint: endpoint,
-        data:
-            'Status: ${resp.statusCode}, Response type: ${resp.data.runtimeType}',
-      );
-
       if (resp.data == null) {
         throw Exception('Response data is null');
       }
-
-      _log('Raw milestone data', endpoint: endpoint, data: resp.data);
 
       currentMilestoneData.value = Milestone.fromJson(
         resp.data as Map<String, dynamic>,
       );
 
-      _log(
-        'Milestone data loaded successfully',
-        endpoint: endpoint,
-        data: 'Milestone: ${currentMilestoneData.value?.objective}',
-      );
+      _log('Milestone data loaded successfully', endpoint: endpoint);
     } catch (e, stackTrace) {
       final errorMsg = e.toString();
       _log(
@@ -459,91 +401,65 @@ class GoalDisplayController extends GetxController {
     }
   }
 
-  /* ---------- Data Coordination Helpers ---------- */
+  /* ---------- Data Helper Methods ---------- */
 
-  /// Find goal by ID from both active and completed lists
   Goal? getGoalById(String goalId) {
-    if (goalId.isEmpty) {
-      _log('Cannot get goal - empty ID provided', isError: true);
-      return null;
-    }
-
+    if (goalId.isEmpty) return null;
     try {
       return activeGoals.firstWhere((goal) => goal.id == goalId);
     } catch (e) {
       try {
         return completedGoals.firstWhere((goal) => goal.id == goalId);
       } catch (e) {
-        _log('Goal not found with ID: $goalId', isError: true);
         return null;
       }
     }
   }
 
-  /// Get currently selected goal details
   Goal? getCurrentGoal() {
-    if (currentGoalId.value.isEmpty) {
-      return null;
-    }
+    if (currentGoalId.value.isEmpty) return null;
     return getGoalById(currentGoalId.value);
   }
 
-  /// Get goal name for current milestones view
   String getCurrentGoalName() {
     final goal = getCurrentGoal();
+    if (goal == null) {
+      _log('Warning: Current goal is null', isError: true);
+    }
     return goal?.name ?? 'Unknown Goal';
   }
 
-  /// Get goal description for current milestones view
   String getCurrentGoalDescription() {
-    final goal = getCurrentGoal();
-    return goal?.description ?? '';
+    return getCurrentGoal()?.description ?? '';
   }
 
-  /// Get goal completion rate for current milestones view
   double getCurrentGoalCompletionRate() {
-    final goal = getCurrentGoal();
-    return goal?.completionRate ?? 0.0;
+    return getCurrentGoal()?.completionRate ?? 0.0;
   }
 
-  /// Check if current goal is completed
   bool isCurrentGoalCompleted() {
-    final goal = getCurrentGoal();
-    return goal?.isCompleted ?? false;
+    return getCurrentGoal()?.isCompleted ?? false;
   }
 
-  /// Get milestone by ID from current milestones
   Milestone? getMilestoneById(String milestoneId) {
-    if (milestoneId.isEmpty) {
-      _log('Cannot get milestone - empty ID provided', isError: true);
-      return null;
-    }
-
+    if (milestoneId.isEmpty) return null;
     final milestones = goalMilestones.value;
-    if (milestones == null) {
-      _log('No milestones loaded', isError: true);
-      return null;
-    }
+    if (milestones == null) return null;
 
     try {
-      return milestones.milestones.firstWhere(
-        (milestone) => milestone.id == milestoneId,
-      );
+      return milestones.milestones.firstWhere((m) => m.id == milestoneId);
     } catch (e) {
-      _log('Milestone not found with ID: $milestoneId', isError: true);
       return null;
     }
   }
 
-  /// Get currently selected milestone details
   Milestone? getCurrentMilestone() {
-    if (currentMilestoneId.value.isEmpty) {
-      return null;
-    }
+    if (currentMilestoneId.value.isEmpty) return null;
     return getMilestoneById(currentMilestoneId.value);
   }
 
   /* ---------- Refresh Methods ---------- */
+
   Future<void> refreshGoals() async {
     _log('Refreshing goals... (FORCED)');
     await loadGoals(force: true);
@@ -554,11 +470,7 @@ class GoalDisplayController extends GetxController {
       _log('Cannot refresh milestones - no goal selected', isError: true);
       return;
     }
-
-    _log(
-      'Refreshing milestones... (FORCED)',
-      data: 'GoalId: ${currentGoalId.value}',
-    );
+    _log('Refreshing milestones... (FORCED)');
     await loadMilestones(currentGoalId.value, force: true);
   }
 
@@ -567,29 +479,12 @@ class GoalDisplayController extends GetxController {
       _log('Cannot refresh tasks - no milestone selected', isError: true);
       return;
     }
-
-    _log(
-      'Refreshing tasks... (FORCED)',
-      data: 'MilestoneId: ${currentMilestoneId.value}',
-    );
+    _log('Refreshing tasks... (FORCED)');
     await loadTasks(currentMilestoneId.value, force: true);
   }
 
-  Future<void> refreshAll() async {
-    _log('Refreshing all data... (FORCED)');
-    await loadGoals(force: true);
-    if (currentGoalId.value.isNotEmpty) {
-      await loadMilestones(currentGoalId.value, force: true);
-    }
-    if (currentMilestoneId.value.isNotEmpty) {
-      await loadTasks(currentMilestoneId.value, force: true);
-    }
-    _log('All data refreshed');
-  }
+  /* ---------- Clear Methods ---------- */
 
-  /* ---------- Navigation Helpers ---------- */
-
-  /// Clear milestone selection when navigating away
   void clearMilestoneSelection() {
     _log('Clearing milestone selection');
     currentMilestoneId('');
@@ -597,7 +492,6 @@ class GoalDisplayController extends GetxController {
     tasksError('');
   }
 
-  /// Clear goal selection when navigating away
   void clearGoalSelection() {
     _log('Clearing goal selection');
     currentGoalId('');
@@ -606,9 +500,8 @@ class GoalDisplayController extends GetxController {
     clearMilestoneSelection();
   }
 
-  /* ---------- Status Management ---------- */
+  /* ---------- Statistics ---------- */
 
-  /// Get milestone completion statistics for current goal
   Map<String, int> getMilestoneStats() {
     final milestones = goalMilestones.value;
     if (milestones == null) {
@@ -623,7 +516,6 @@ class GoalDisplayController extends GetxController {
     return stats;
   }
 
-  /// Get task completion statistics for current milestone
   Map<String, int> getTaskStats() {
     final stats = <String, int>{'pending': 0, 'active': 0, 'completed': 0};
     for (final task in milestoneTasks) {

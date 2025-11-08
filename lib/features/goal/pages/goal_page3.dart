@@ -37,8 +37,9 @@ class MilestoneDetailScreen extends GetView<GoalDisplayController> {
           Future.microtask(() => controller.loadTasks(milestoneId));
         }
 
-        // ✅ Load tasks (non-blocking)
-        if (controller.shouldLoadTasks(milestoneId)) {
+        // ✅ Load tasks (non-blocking) — ensure tasks are loaded if not already
+        if (!controller.tasksLoading.value &&
+            controller.milestoneTasks.isEmpty) {
           Future.microtask(() => controller.loadTasks(milestoneId));
         }
 

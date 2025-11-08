@@ -20,7 +20,10 @@ class TimeSlotEntry {
         day: day,
         timeSlot: json['time_slot'] as String,
         flexibility: json['flexibility'] as String? ?? 'undefined',
-        Milestone_name: json['Milestone_name'] as String,
+        Milestone_name:
+            json['Milestone_name'] as String? ??
+            json['milestone_id'] as String? ??
+            '',
         priorityScore: json['priority_score'] as int? ?? 0,
         allocatedMinutes: json['allocated_minutes'] as int,
       );

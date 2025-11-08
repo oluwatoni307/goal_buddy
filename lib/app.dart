@@ -15,7 +15,7 @@ class App extends StatelessWidget {
       title: 'Goal Buddy',
       debugShowCheckedModeBanner: false,
       theme: materialLightTheme,
-      initialRoute: Routes.onboarding,
+      initialRoute: Routes.splash,
       getPages: Routes.pages,
       home: Stack(
         children: [
