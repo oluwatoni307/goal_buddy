@@ -61,14 +61,14 @@ class HomeScreen extends GetView<HomeController> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No habits yet',
+                    'You have crush your goals for today!',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Let's create one to get started!",
+                    "Come back tomorrow or add new goals to keep the momentum going.",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(
                         context,
@@ -80,7 +80,7 @@ class HomeScreen extends GetView<HomeController> {
                   ElevatedButton.icon(
                     onPressed: () => Get.toNamed(Routes.goalStep1),
                     icon: const Icon(Icons.add),
-                    label: const Text('Create Habit'),
+                    label: const Text('Create Goal'),
                   ),
                 ],
               ),

@@ -21,11 +21,12 @@ class NavBar extends StatelessWidget {
             break;
           case 2:
             Get.offAllNamed('/schedule');
+       
           case 3:
-            Get.offAllNamed('/profile');
-            break;
-          case 4:
             Get.offAllNamed('/dashboard');
+            break;
+             case 4:
+            Get.offAllNamed('/profile');
             break;
         }
       },
@@ -40,11 +41,12 @@ class NavBar extends StatelessWidget {
           label: 'Goals',
         ),
         BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Schedule'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         BottomNavigationBarItem(
           icon: Icon(Icons.dashboard),
           label: 'Dashboard',
         ),
+                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+
       ],
     );
   }

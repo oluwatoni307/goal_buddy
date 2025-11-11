@@ -15,7 +15,7 @@ class ProfileView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile'), centerTitle: true),
-      bottomNavigationBar: NavBar(currentIndex: 3),
+      bottomNavigationBar: NavBar(currentIndex: 4),
 
       body: Obx(() {
         // Loading state

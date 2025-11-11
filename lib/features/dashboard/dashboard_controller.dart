@@ -12,6 +12,11 @@ Future<Dashboard> fetchDashboard() async {
   final endpoint = '/dashboard';
   final resp = await _api.get(endpoint, query: {'user_id': uid});
 
-  if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
-  return Dashboard.fromJson(jsonDecode(resp.data));
+  if (resp.statusCode != 200) {
+    throw Exception('Failed to fetch dashboard: HTTP ${resp.statusCode}');
+  }
+  
+  // Check if resp.data is already decoded
+  final data = resp.data is String ? jsonDecode(resp.data) : resp.data;
+  return Dashboard.fromJson(data as Map<String, dynamic>);
 }
