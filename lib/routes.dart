@@ -90,13 +90,9 @@ class Routes {
         Get.put(OnboardingController());
       }),
     ),
-    GetPage(
-      name: dashboard,
-      page: () => const DashboardScreen(),
-      binding: BindingsBuilder(() {
-        Get.put(AnalyticsController());
-      }),
-    ),
+
+    GetPage(name: dashboard, page: () => DashboardPage()),
+
     GetPage(
       name: goalAnalyze,
       page: () => const GoalAnalysisScreen(),

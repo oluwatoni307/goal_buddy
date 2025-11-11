@@ -1,67 +1,44 @@
-// GENERATED for feature: dashboard
-// TODO: implement
-class DailyAnalytics {
-  final double habitCompletionRate;          // 0-1
-  final double goalCompletionRate;           // 0-1
-  final Map<String, double> last7DaysHabit;  // "Mon": 0.8, …
-  final List<GoalBreakdown> goalsBreakdown;  // slim list
+class Dashboard {
+  final List<Task> activeTasks;
+  final List<Goal> goals;
+  final String aiInsights;
 
-  DailyAnalytics({
-    required this.habitCompletionRate,
-    required this.goalCompletionRate,
-    required this.last7DaysHabit,
-    required this.goalsBreakdown,
-  });
-
-  factory DailyAnalytics.fromJson(Map<String, dynamic> json) => DailyAnalytics(
-        habitCompletionRate: (json['habit_completion_rate'] as num).toDouble(),
-        goalCompletionRate: (json['goal_completion_rate'] as num).toDouble(),
-        last7DaysHabit: Map<String, double>.from(
-            (json['last_7_days_habit'] as Map).map((k, v) => MapEntry(k, (v as num).toDouble()))),
-        goalsBreakdown: (json['goals_breakdown'] as List)
-            .map((e) => GoalBreakdown.fromJson(e))
-            .toList(),
-      );
+  Dashboard.fromJson(Map<String, dynamic> json)
+    : activeTasks = (json['active_tasks'] as List)
+          .map((e) => Task.fromJson(e))
+          .toList(),
+      goals = (json['goals'] as List).map((e) => Goal.fromJson(e)).toList(),
+      aiInsights = json['ai_insights'] as String;
 }
 
-class GoalBreakdown {
-  final String name;
+class Task {
+  final String id, name, status;
+  final String? day;
+  final bool today;
+  Task.fromJson(Map<String, dynamic> json)
+    : id = json['id'],
+      name = json['name'],
+      status = json['status'],
+      day = json['day'],
+      today = json['today'] ?? false;
+}
+
+class Goal {
+  final String? goalName;
+  final double? completionRate;
+  final List<Milestone> milestones;
+  Goal.fromJson(Map<String, dynamic> json)
+    : goalName = json['goal_name'],
+      completionRate = json['completion_rate']?.toDouble(),
+      milestones = (json['milestones'] as List? ?? [])
+          .map((e) => Milestone.fromJson(e))
+          .toList();
+}
+
+class Milestone {
+  final String objective;
   final double completionRate;
-
-  GoalBreakdown({required this.name, required this.completionRate});
-
-  factory GoalBreakdown.fromJson(Map<String, dynamic> json) => GoalBreakdown(
-        name: json['name'],
-        completionRate: (json['completion_rate'] as num).toDouble(),
-      );
-}
-
-class MonthlyAnalytics {
-  final int habitsAchieved;
-  final int goalsAchieved;
-  final int daysActive;
-  final List<double> weeklyHabitCompletion; // 4 items
-  final List<int> weeklyGoalsAchieved;      // 4 items
-  final String insight;
-
-  MonthlyAnalytics({
-    required this.habitsAchieved,
-    required this.goalsAchieved,
-    required this.daysActive,
-    required this.weeklyHabitCompletion,
-    required this.weeklyGoalsAchieved,
-    required this.insight,
-  });
-
-  factory MonthlyAnalytics.fromJson(Map<String, dynamic> json) => MonthlyAnalytics(
-        habitsAchieved: json['habits_achieved'] as int,
-        goalsAchieved: json['goals_achieved'] as int,
-        daysActive: json['days_active'] as int,
-        weeklyHabitCompletion: (json['weekly_habit_completion'] as List)
-            .map((e) => (e as num).toDouble())
-            .toList(),
-        weeklyGoalsAchieved:
-            (json['weekly_goals_achieved'] as List).map((e) => e as int).toList(),
-        insight: json['insight'],
-      );
+  Milestone.fromJson(Map<String, dynamic> json)
+    : objective = json['objective'],
+      completionRate = (json['completion_rate'] ?? 0).toDouble();
 }
