@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../bannerService.dart';
 import 'goal_define_model.dart';
 import '/services/api_service.dart';
@@ -148,10 +149,11 @@ class GoalCreationController extends GetxController {
       error('');
 
       print('Preparing to save goal...');
+      final uid = Supabase.instance.client.auth.currentUser?.id;
 
       // Combine user input + only key analysis fields
       final jsonData = {
-        'user_id': 'mock-user-id', // TODO: Get from auth service
+        'user_id': uid, // TODO: Get from auth service
         'statement': inputData.statement,
         'date': inputData.date.toIso8601String(),
         'importance': inputData.importance,
