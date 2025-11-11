@@ -149,16 +149,12 @@ class GoalCreationController extends GetxController {
       error('');
 
       print('Preparing to save goal...');
-<<<<<<< HEAD
         final uid = Supabase.instance.client.auth.currentUser?.id;
   if (uid == null || uid.isEmpty) {
     error('User not authenticated');
     return false;
   }
 
-=======
-      final uid = Supabase.instance.client.auth.currentUser?.id;
->>>>>>> 572cf1be13d0666732446da32d8fa782cbad1d1b
 
       // Combine user input + only key analysis fields
       final jsonData = {
